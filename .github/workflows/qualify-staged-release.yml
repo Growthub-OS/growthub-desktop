@@ -1,0 +1,62 @@
+name: Qualify staged Desktop release
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: desktop-staged-qualification
+  cancel-in-progress: false
+jobs:
+  installer:
+    if: github.repository == 'Growthub-OS/growthub-desktop'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: mac
+            os: macos-15
+            file: Growthub-Desktop-mac-arm64.dmg
+          - platform: windows
+            os: windows-latest
+            file: Growthub-Desktop-win-x64.exe
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    env:
+      RELEASE_TAG: v0.2.31
+      SOURCE_COMMIT: 45320ce954e287fa12bd777f2220db4577f29c88
+      GROWTHUB_DESKTOP_VERSION: 0.2.31
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: Growthub-OS/growthub-desktop
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Require staged immutable source
+        run: |
+          gh release view "$RELEASE_TAG" --json isDraft,body > release.json
+          node -e 'const r=require("./release.json"); if(!r.isDraft || !r.body.includes("Source commit: "+process.env.SOURCE_COMMIT)) throw Error("Staged release identity mismatch")'
+      - name: Download only binary and verification assets
+        run: |
+          gh release download "$RELEASE_TAG" -p '${{ matrix.file }}' -p '${{ matrix.platform }}.receipt.json' -p release-verification-tools.tgz
+          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools.tgz")).digest("hex");if(sha!=="a1d79ed0d73d426bc12e9a598aecd08fbaf303005196da002b7eb3702f503911")throw Error("Verification tools changed")'
+          tar -xzf release-verification-tools.tgz
+          npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify full installer bytes before execution
+        run: |
+          node public-release.mjs receipt '${{ matrix.platform }}' '${{ matrix.file }}' "$GROWTHUB_DESKTOP_VERSION" "$SOURCE_COMMIT" actual.receipt.json
+          node -e 'const fs=require("fs"),a=require("./actual.receipt.json"),b=JSON.parse(fs.readFileSync("${{ matrix.platform }}.receipt.json"));for(const k of ["version","sourceCommit","sha256","bytes","platform"])if(a[k]!==b[k])throw Error("Installer receipt mismatch: "+k)'
+      - name: Install and open through unchanged production verifier
+        run: GITHUB_SHA="$SOURCE_COMMIT" node installer-smoke.mjs '${{ matrix.platform }}' '${{ matrix.file }}' installer-smoke
+      - name: Inspect actual installed application metadata
+        run: |
+          if [ '${{ matrix.platform }}' = mac ]; then
+            RESOURCES="$HOME/Applications/Growthub.app/Contents/Resources"
+          else
+            RESOURCES="$(node -p 'require("path").join(require("os").tmpdir(),"growthub-installer-smoke","resources")')"
+          fi
+          node public-release.mjs inspect "$RESOURCES" "$GROWTHUB_DESKTOP_VERSION" "$SOURCE_COMMIT"
+      - name: Preserve actual installer proof in the draft
+        run: gh release upload "$RELEASE_TAG" installer-smoke/* --clobber
