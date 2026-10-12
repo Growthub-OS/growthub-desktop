@@ -41,7 +41,7 @@ jobs:
       - name: Download only binary and verification assets
         run: |
           gh release download "$RELEASE_TAG" -p '${{ matrix.file }}' -p '${{ matrix.platform }}.receipt.json' -p release-verification-tools.tgz
-          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools.tgz")).digest("hex");if(sha!=="9b7525d655bb0b7a70a7a3bb590dfa9299f18ce3b8fca31fda6c3e44df6569f6")throw Error("Verification tools changed")'
+          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools.tgz")).digest("hex");if(sha!=="91e63081d45bc18d8309c4c259f2c077208f2ddb6d249ce0bde551274e04acbe")throw Error("Verification tools changed")'
           tar -xzf release-verification-tools.tgz
           npm ci --ignore-scripts --no-audit --no-fund
       - name: Verify full installer bytes before execution
