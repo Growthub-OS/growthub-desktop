@@ -13,9 +13,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: mac
-            os: macos-15
-            file: Growthub-Desktop-mac-arm64.dmg
           - platform: windows
             os: windows-latest
             file: Growthub-Desktop-win-x64.exe
@@ -40,7 +37,7 @@ jobs:
           node -e 'const r=require("./release.json"); if(!r.isDraft || !r.body.includes("Source commit: "+process.env.SOURCE_COMMIT)) throw Error("Staged release identity mismatch")'
       - name: Download only binary and verification assets
         run: |
-          gh release download "$RELEASE_TAG" -p release-verification-tools.tgz
+          gh release download "$RELEASE_TAG" -p release-verification-tools-windows.tgz
           if [ '${{ matrix.platform }}' = mac ]; then
             gh release download "$RELEASE_TAG" -p '${{ matrix.file }}' -p mac.receipt.json
           else
@@ -48,8 +45,8 @@ jobs:
             node -e 'const fs=require("fs"),c=require("crypto");if(c.createHash("sha256").update(fs.readFileSync("win-unpacked.zip")).digest("hex")!=="ea2dca442a683e44732cb60f6b69989dfc3cde1a8e58fc995a4aa0cf092c7bac")throw Error("Staged Windows payload changed")'
             unzip -q win-unpacked.zip
           fi
-          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools.tgz")).digest("hex");if(sha!=="b813b727901752b0689b3997b41c3e5c9a9b46d868c8ae97a8e83771b09962ee")throw Error("Verification tools changed")'
-          tar -xzf release-verification-tools.tgz
+          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools-windows.tgz")).digest("hex");if(sha!=="5869642e050c48a4cc7e2b6f2091ec4f5fb7fdded137bfbe8e12ea431d648c4a")throw Error("Verification tools changed")'
+          tar -xzf release-verification-tools-windows.tgz
           npm ci --ignore-scripts --no-audit --no-fund
       - name: Package the inspected Windows payload on Windows
         if: matrix.platform == 'windows'
