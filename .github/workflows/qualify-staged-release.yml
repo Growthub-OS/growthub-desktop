@@ -40,10 +40,30 @@ jobs:
           node -e 'const r=require("./release.json"); if(!r.isDraft || !r.body.includes("Source commit: "+process.env.SOURCE_COMMIT)) throw Error("Staged release identity mismatch")'
       - name: Download only binary and verification assets
         run: |
-          gh release download "$RELEASE_TAG" -p '${{ matrix.file }}' -p '${{ matrix.platform }}.receipt.json' -p release-verification-tools.tgz
-          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools.tgz")).digest("hex");if(sha!=="e1cb47fdf5a3f4a6bb11c360b9bed25cfead91cb194dd8e7f296a0b628f8d159")throw Error("Verification tools changed")'
+          gh release download "$RELEASE_TAG" -p release-verification-tools.tgz
+          if [ '${{ matrix.platform }}' = mac ]; then
+            gh release download "$RELEASE_TAG" -p '${{ matrix.file }}' -p mac.receipt.json
+          else
+            gh release download "$RELEASE_TAG" -p win-unpacked.zip
+            node -e 'const fs=require("fs"),c=require("crypto");if(c.createHash("sha256").update(fs.readFileSync("win-unpacked.zip")).digest("hex")!=="866cd67c20ad75aa24bb87583da0a0095a0ee3d1ce8532fa4c0110f2775dc98b")throw Error("Staged Windows payload changed")'
+            unzip -q win-unpacked.zip
+          fi
+          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools.tgz")).digest("hex");if(sha!=="197d9a3e5435e5ecd6d9cd053f7992822bd05ce50be12598ffe985b88a96077b")throw Error("Verification tools changed")'
           tar -xzf release-verification-tools.tgz
           npm ci --ignore-scripts --no-audit --no-fund
+      - name: Package the inspected Windows payload on Windows
+        if: matrix.platform == 'windows'
+        env:
+          GROWTHUB_DESKTOP_BUILD_COMMIT: 4f4334c7f7fce146528b7ef72eaa5da789c6c08a
+          GROWTHUB_DESKTOP_URL: https://www.growthub.ai/dashboard/workflow/chat?project=inbox
+          GROWTHUB_DESKTOP_RELEASE: '0'
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          node node_modules/electron-builder/cli.js --config electron-builder.config.cjs --prepackaged win-unpacked --win nsis --x64 --publish never -c.directories.output=packaged
+          cp packaged/Growthub-Desktop-win-x64.exe .
+          node public-release.mjs inspect win-unpacked/resources "$GROWTHUB_DESKTOP_VERSION" "$SOURCE_COMMIT"
+          node public-release.mjs receipt windows Growthub-Desktop-win-x64.exe "$GROWTHUB_DESKTOP_VERSION" "$SOURCE_COMMIT" windows.receipt.json
+          gh release upload "$RELEASE_TAG" Growthub-Desktop-win-x64.exe windows.receipt.json
       - name: Verify full installer bytes before execution
         run: |
           node public-release.mjs receipt '${{ matrix.platform }}' '${{ matrix.file }}' "$GROWTHUB_DESKTOP_VERSION" "$SOURCE_COMMIT" actual.receipt.json
