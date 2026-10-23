@@ -48,7 +48,7 @@ jobs:
             node -e 'const fs=require("fs"),c=require("crypto");if(c.createHash("sha256").update(fs.readFileSync("win-unpacked.zip")).digest("hex")!=="866cd67c20ad75aa24bb87583da0a0095a0ee3d1ce8532fa4c0110f2775dc98b")throw Error("Staged Windows payload changed")'
             unzip -q win-unpacked.zip
           fi
-          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools.tgz")).digest("hex");if(sha!=="197d9a3e5435e5ecd6d9cd053f7992822bd05ce50be12598ffe985b88a96077b")throw Error("Verification tools changed")'
+          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools.tgz")).digest("hex");if(sha!=="b45e95562c6e2627f7262a184d38302c4bf4071d637a738f7812a9f774b228bf")throw Error("Verification tools changed")'
           tar -xzf release-verification-tools.tgz
           npm ci --ignore-scripts --no-audit --no-fund
       - name: Package the inspected Windows payload on Windows
@@ -59,7 +59,7 @@ jobs:
           GROWTHUB_DESKTOP_RELEASE: '0'
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: |
-          node node_modules/electron-builder/cli.js --config electron-builder.config.cjs --prepackaged win-unpacked --win nsis --x64 --publish never -c.directories.output=packaged
+          node node_modules/electron-builder/cli.js --config electron-builder.config.cjs --prepackaged win-unpacked -c.electronVersion=41.5.0 --win nsis --x64 --publish never -c.directories.output=packaged
           cp packaged/Growthub-Desktop-win-x64.exe .
           node public-release.mjs inspect win-unpacked/resources "$GROWTHUB_DESKTOP_VERSION" "$SOURCE_COMMIT"
           node public-release.mjs receipt windows Growthub-Desktop-win-x64.exe "$GROWTHUB_DESKTOP_VERSION" "$SOURCE_COMMIT" windows.receipt.json
