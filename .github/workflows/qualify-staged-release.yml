@@ -25,9 +25,9 @@ jobs:
       run:
         shell: bash
     env:
-      RELEASE_TAG: v0.2.107
-      SOURCE_COMMIT: 258b5a21f1bfad7f5e843c7caab45986775a3ece
-      GROWTHUB_DESKTOP_VERSION: 0.2.107
+      RELEASE_TAG: v0.2.109
+      SOURCE_COMMIT: 171b5c75f42297f294c4756474ca638282a6cae1
+      GROWTHUB_DESKTOP_VERSION: 0.2.109
       GH_TOKEN: ${{ github.token }}
       GH_REPO: Growthub-OS/growthub-desktop
     steps:
@@ -45,16 +45,16 @@ jobs:
             gh release download "$RELEASE_TAG" -p '${{ matrix.file }}' -p mac.receipt.json
           else
             gh release download "$RELEASE_TAG" -p win-unpacked.zip
-            node -e 'const fs=require("fs"),c=require("crypto");if(c.createHash("sha256").update(fs.readFileSync("win-unpacked.zip")).digest("hex")!=="cc9db5460d767748ca7b1595c45067c076e06f84b8762d55407a369ff044d249")throw Error("Staged Windows payload changed")'
+            node -e 'const fs=require("fs"),c=require("crypto");if(c.createHash("sha256").update(fs.readFileSync("win-unpacked.zip")).digest("hex")!=="dc852899a50d5bdeda4ed1475dcbcb547d9382c8885aa690d5f52a2074ec79b0")throw Error("Staged Windows payload changed")'
             unzip -q win-unpacked.zip
           fi
-          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools-windows.tgz")).digest("hex");if(sha!=="e0623b5740ffc2f68ae0c7c3d928fc67dfd60a83c71a2808e6da71da46d23eac")throw Error("Verification tools changed")'
+          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools-windows.tgz")).digest("hex");if(sha!=="fbbabd2b66e66804c83f87685ffd5461d7006c0be08b0e6db6abd69a3861c62a")throw Error("Verification tools changed")'
           tar -xzf release-verification-tools-windows.tgz
           npm ci --ignore-scripts --no-audit --no-fund
       - name: Package the inspected Windows payload on Windows
         if: matrix.platform == 'windows'
         env:
-          GROWTHUB_DESKTOP_BUILD_COMMIT: 258b5a21f1bfad7f5e843c7caab45986775a3ece
+          GROWTHUB_DESKTOP_BUILD_COMMIT: 171b5c75f42297f294c4756474ca638282a6cae1
           GROWTHUB_DESKTOP_URL: https://www.growthub.ai/dashboard/workflow/chat?project=inbox
           GROWTHUB_DESKTOP_RELEASE: '0'
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
