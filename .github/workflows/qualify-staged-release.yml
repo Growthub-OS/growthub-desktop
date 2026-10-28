@@ -25,9 +25,9 @@ jobs:
       run:
         shell: bash
     env:
-      RELEASE_TAG: v0.2.101
-      SOURCE_COMMIT: c3398da90664f530ef5b4dc8252a1128a3cc799b
-      GROWTHUB_DESKTOP_VERSION: 0.2.101
+      RELEASE_TAG: v0.2.107
+      SOURCE_COMMIT: 258b5a21f1bfad7f5e843c7caab45986775a3ece
+      GROWTHUB_DESKTOP_VERSION: 0.2.107
       GH_TOKEN: ${{ github.token }}
       GH_REPO: Growthub-OS/growthub-desktop
     steps:
@@ -45,7 +45,7 @@ jobs:
             gh release download "$RELEASE_TAG" -p '${{ matrix.file }}' -p mac.receipt.json
           else
             gh release download "$RELEASE_TAG" -p win-unpacked.zip
-            node -e 'const fs=require("fs"),c=require("crypto");if(c.createHash("sha256").update(fs.readFileSync("win-unpacked.zip")).digest("hex")!=="aac6977fcfc202044553398971e0a9452ca5ae87bc2cf21c365f36f11c06a31e")throw Error("Staged Windows payload changed")'
+            node -e 'const fs=require("fs"),c=require("crypto");if(c.createHash("sha256").update(fs.readFileSync("win-unpacked.zip")).digest("hex")!=="cc9db5460d767748ca7b1595c45067c076e06f84b8762d55407a369ff044d249")throw Error("Staged Windows payload changed")'
             unzip -q win-unpacked.zip
           fi
           node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools-windows.tgz")).digest("hex");if(sha!=="e0623b5740ffc2f68ae0c7c3d928fc67dfd60a83c71a2808e6da71da46d23eac")throw Error("Verification tools changed")'
@@ -54,7 +54,7 @@ jobs:
       - name: Package the inspected Windows payload on Windows
         if: matrix.platform == 'windows'
         env:
-          GROWTHUB_DESKTOP_BUILD_COMMIT: c3398da90664f530ef5b4dc8252a1128a3cc799b
+          GROWTHUB_DESKTOP_BUILD_COMMIT: 258b5a21f1bfad7f5e843c7caab45986775a3ece
           GROWTHUB_DESKTOP_URL: https://www.growthub.ai/dashboard/workflow/chat?project=inbox
           GROWTHUB_DESKTOP_RELEASE: '0'
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
