@@ -48,7 +48,7 @@ jobs:
             node -e 'const fs=require("fs"),c=require("crypto");if(c.createHash("sha256").update(fs.readFileSync("win-unpacked.zip")).digest("hex")!=="bd1dce9b9091ddce9dd1a283dfd2d2b40503ec91999aff08b0ee74fefd38ec93")throw Error("Staged Windows payload changed")'
             unzip -q win-unpacked.zip
           fi
-          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools-windows.tgz")).digest("hex");if(sha!=="bd345d513d6c5f82379733b4213251e11b03c53f803c076714bba30ec4d82219")throw Error("Verification tools changed")'
+          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools-windows.tgz")).digest("hex");if(sha!=="97d57c7906213c767ceef1b2f0371a220c54193df4d82df7c725f7cb9179e010")throw Error("Verification tools changed")'
           tar -xzf release-verification-tools-windows.tgz
           npm ci --ignore-scripts --no-audit --no-fund
       - name: Package the inspected Windows payload on Windows
