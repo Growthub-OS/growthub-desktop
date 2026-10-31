@@ -25,9 +25,9 @@ jobs:
       run:
         shell: bash
     env:
-      RELEASE_TAG: v0.2.122
-      SOURCE_COMMIT: 4e10a8c68641c90e5bee6b7719aa66abba07a770
-      GROWTHUB_DESKTOP_VERSION: 0.2.122
+      RELEASE_TAG: v0.2.124
+      SOURCE_COMMIT: 5895b1c28260a31d2049d3dd46bc01e6fde8097a
+      GROWTHUB_DESKTOP_VERSION: 0.2.124
       GH_TOKEN: ${{ github.token }}
       GH_REPO: Growthub-OS/growthub-desktop
     steps:
@@ -41,29 +41,10 @@ jobs:
       - name: Download only binary and verification assets
         run: |
           gh release download "$RELEASE_TAG" -p release-verification-tools-windows.tgz
-          if [ '${{ matrix.platform }}' = mac ]; then
-            gh release download "$RELEASE_TAG" -p '${{ matrix.file }}' -p mac.receipt.json
-          else
-            gh release download "$RELEASE_TAG" -p win-unpacked.zip
-            node -e 'const fs=require("fs"),c=require("crypto");if(c.createHash("sha256").update(fs.readFileSync("win-unpacked.zip")).digest("hex")!=="ae181e8952fa2720e152d7d99f0ba61802f2ca78d243b8bb59adf873c3dc32e2")throw Error("Staged Windows payload changed")'
-            unzip -q win-unpacked.zip
-          fi
+          gh release download "$RELEASE_TAG" -p '${{ matrix.file }}' -p '${{ matrix.platform }}.receipt.json'
           node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools-windows.tgz")).digest("hex");if(sha!=="c963896b178e7f3b26a72aa7524b1a914d0c5ea9084897e5a8ca5442532e4133")throw Error("Verification tools changed")'
           tar -xzf release-verification-tools-windows.tgz
           npm ci --ignore-scripts --no-audit --no-fund
-      - name: Package the inspected Windows payload on Windows
-        if: matrix.platform == 'windows'
-        env:
-          GROWTHUB_DESKTOP_BUILD_COMMIT: 4e10a8c68641c90e5bee6b7719aa66abba07a770
-          GROWTHUB_DESKTOP_URL: https://www.growthub.ai/dashboard/workflow/chat?project=inbox
-          GROWTHUB_DESKTOP_RELEASE: '0'
-          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-        run: |
-          node node_modules/electron-builder/cli.js --config electron-builder.config.cjs --prepackaged win-unpacked -c.electronVersion=41.5.0 --win nsis --x64 --publish never -c.directories.output=packaged
-          cp packaged/Growthub-Desktop-win-x64.exe .
-          node public-release.mjs inspect win-unpacked/resources "$GROWTHUB_DESKTOP_VERSION" "$SOURCE_COMMIT"
-          node public-release.mjs receipt windows Growthub-Desktop-win-x64.exe "$GROWTHUB_DESKTOP_VERSION" "$SOURCE_COMMIT" windows.receipt.json
-          gh release upload "$RELEASE_TAG" Growthub-Desktop-win-x64.exe windows.receipt.json
       - name: Verify full installer bytes before execution
         run: |
           node public-release.mjs receipt '${{ matrix.platform }}' '${{ matrix.file }}' "$GROWTHUB_DESKTOP_VERSION" "$SOURCE_COMMIT" actual.receipt.json
