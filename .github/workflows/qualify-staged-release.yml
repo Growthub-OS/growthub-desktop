@@ -25,9 +25,9 @@ jobs:
       run:
         shell: bash
     env:
-      RELEASE_TAG: v0.2.130
-      SOURCE_COMMIT: a72e4b335dbf48e819ea98a56e9e7ce72cd48934
-      GROWTHUB_DESKTOP_VERSION: 0.2.130
+      RELEASE_TAG: v0.2.131
+      SOURCE_COMMIT: abbace454eb2273b1dd5406099cbb3c9d7d1f582
+      GROWTHUB_DESKTOP_VERSION: 0.2.131
       GH_TOKEN: ${{ github.token }}
       GH_REPO: Growthub-OS/growthub-desktop
     steps:
@@ -40,10 +40,10 @@ jobs:
           node -e 'const r=require("./release.json"); if(!r.isDraft || !r.body.includes("Source commit: "+process.env.SOURCE_COMMIT)) throw Error("Staged release identity mismatch")'
       - name: Download only binary and verification assets
         run: |
-          gh release download "$RELEASE_TAG" -p release-verification-tools-windows.tgz
+          gh release download "$RELEASE_TAG" -p release-verification-tools-phone-0131.tgz
           gh release download "$RELEASE_TAG" -p '${{ matrix.file }}' -p '${{ matrix.platform }}.receipt.json'
-          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools-windows.tgz")).digest("hex");if(sha!=="c963896b178e7f3b26a72aa7524b1a914d0c5ea9084897e5a8ca5442532e4133")throw Error("Verification tools changed")'
-          tar -xzf release-verification-tools-windows.tgz
+          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools-phone-0131.tgz")).digest("hex");if(sha!=="591eca7dfda3cb08d4f86fcc4e2ef7684349cc0c8244358c93363dde1cf947e7")throw Error("Verification tools changed")'
+          tar -xzf release-verification-tools-phone-0131.tgz
           npm ci --ignore-scripts --no-audit --no-fund
       - name: Verify full installer bytes before execution
         run: |
