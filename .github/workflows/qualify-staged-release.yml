@@ -25,9 +25,9 @@ jobs:
       run:
         shell: bash
     env:
-      RELEASE_TAG: v0.2.186
-      SOURCE_COMMIT: b375c6174b9a7852381267671d8bdeb22459bb1c
-      GROWTHUB_DESKTOP_VERSION: 0.2.186
+      RELEASE_TAG: v0.2.187
+      SOURCE_COMMIT: e2ca924794eda42e2028dd6d18dd036aa23c7a14
+      GROWTHUB_DESKTOP_VERSION: 0.2.187
       GH_TOKEN: ${{ github.token }}
       GH_REPO: Growthub-OS/growthub-desktop
     steps:
