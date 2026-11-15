@@ -25,9 +25,9 @@ jobs:
       run:
         shell: bash
     env:
-      RELEASE_TAG: v0.2.188
-      SOURCE_COMMIT: e3c3e4242c55f61c2bb126e0200fed4b1ab70be1
-      GROWTHUB_DESKTOP_VERSION: 0.2.188
+      RELEASE_TAG: v0.2.190
+      SOURCE_COMMIT: b83ad992c2503e07e6afcb2a1d9fe9fdd282b7c3
+      GROWTHUB_DESKTOP_VERSION: 0.2.190
       GH_TOKEN: ${{ github.token }}
       GH_REPO: Growthub-OS/growthub-desktop
     steps:
@@ -42,7 +42,7 @@ jobs:
         run: |
           gh release download "$RELEASE_TAG" -p release-verification-tools.tgz
           gh release download "$RELEASE_TAG" -p '${{ matrix.file }}' -p '${{ matrix.platform }}.receipt.json'
-          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools.tgz")).digest("hex");if(sha!=="42c5da7142ea9f9ddc0e2c7110a65ce8567687cdaec32a3608d341ad85421119")throw Error("Verification tools changed")'
+          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools.tgz")).digest("hex");if(sha!=="10dbae4ecd409b2d85e9aebdb04e96aac23864ae6857e3efe5a82893a97f870a")throw Error("Verification tools changed")'
           tar -xzf release-verification-tools.tgz
           npm ci --ignore-scripts --no-audit --no-fund
       - name: Verify full installer bytes before execution
