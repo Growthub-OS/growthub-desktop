@@ -14,7 +14,7 @@ jobs:
       matrix:
         include:
           - platform: mac
-            os: macos-15
+            os: macos-26
             file: Growthub-Desktop-mac-arm64.dmg
           - platform: windows
             os: windows-latest
