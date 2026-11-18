@@ -1,6 +1,17 @@
 name: Qualify staged Desktop release
+run-name: Qualify staged Desktop ${{ inputs.version }}
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+      source:
+        required: true
+        type: string
+      tools_sha256:
+        required: true
+        type: string
 permissions:
   contents: write
 concurrency:
@@ -25,9 +36,10 @@ jobs:
       run:
         shell: bash
     env:
-      RELEASE_TAG: v0.2.205
-      SOURCE_COMMIT: 51ffd07904848eb4e02de60e9540f0ceec05ef46
-      GROWTHUB_DESKTOP_VERSION: 0.2.205
+      RELEASE_TAG: v${{ inputs.version }}
+      SOURCE_COMMIT: ${{ inputs.source }}
+      GROWTHUB_DESKTOP_VERSION: ${{ inputs.version }}
+      TOOLS_SHA256: ${{ inputs.tools_sha256 }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: Growthub-OS/growthub-desktop
     steps:
@@ -36,13 +48,14 @@ jobs:
           node-version: 22
       - name: Require staged immutable source
         run: |
+          node -e 'const e=process.env;if(!/^\d+\.\d+\.\d+(?:-nightly\.\d{8}\.[a-f0-9]{12})?$/.test(e.GROWTHUB_DESKTOP_VERSION)||!(/^[a-f0-9]{40}$/.test(e.SOURCE_COMMIT))||!(/^[a-f0-9]{64}$/.test(e.TOOLS_SHA256)))throw Error("Invalid staging inputs")'
           gh release view "$RELEASE_TAG" --json isDraft,body > release.json
           node -e 'const r=require("./release.json"); if(!r.isDraft || !r.body.includes("Source commit: "+process.env.SOURCE_COMMIT)) throw Error("Staged release identity mismatch")'
       - name: Download only binary and verification assets
         run: |
           gh release download "$RELEASE_TAG" -p release-verification-tools.tgz
           gh release download "$RELEASE_TAG" -p '${{ matrix.file }}' -p '${{ matrix.platform }}.receipt.json'
-          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools.tgz")).digest("hex");if(sha!=="9fea2804ea1afa047078fb41c5f83b728f720b6d64525d0a1d8084a21b10076d")throw Error("Verification tools changed")'
+          node -e 'const fs=require("fs"),c=require("crypto");const sha=c.createHash("sha256").update(fs.readFileSync("release-verification-tools.tgz")).digest("hex");if(sha!==process.env.TOOLS_SHA256)throw Error("Verification tools changed")'
           tar -xzf release-verification-tools.tgz
           npm ci --ignore-scripts --no-audit --no-fund
       - name: Verify full installer bytes before execution
